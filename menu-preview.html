@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOSZ Menu Preview</title>
+<style>
+:root{color-scheme:dark;--blue:#168cff;--panel:#081a31;--muted:#91a9c5}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 70% 30%,#172d49,#070d17 70%);font:15px Arial,sans-serif;color:#f4f8ff;overflow:hidden}
+.hint{position:fixed;right:22px;bottom:18px;color:#a9bdd5;font-size:12px;line-height:1.8;text-align:right}
+.menu{position:absolute;left:3.5%;top:5%;width:min(390px,42vw);min-width:290px;background:linear-gradient(145deg,#102b4b,#07172b);border:1px solid #277ecb;border-radius:17px;box-shadow:0 18px 55px #0009,0 0 25px #168cff22;overflow:hidden}
+header{padding:17px 19px 14px;background:linear-gradient(100deg,#0879e7,#124a91);display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:21px;font-weight:900;letter-spacing:3px}.version{font-size:11px;color:#d9ebff}
+.tabs{display:flex;padding:8px 12px;gap:7px;background:#061326}
+.tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;color:#9bb5d2;font-size:12px}
+.tab.active{background:#147ee8;color:white;font-weight:bold}
+.content{padding:10px 14px 14px}
+.section{font-size:10px;letter-spacing:1.5px;color:#6faeea;margin:8px 3px}
+.item{min-height:42px;display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;border:1px solid transparent;gap:12px}
+.item.selected{background:#123b65;border-color:#258ce9}
+.name{font-size:13px}.sub{font-size:10px;color:var(--muted);margin-top:3px}
+.switch{width:35px;height:19px;border-radius:20px;background:#33465c;position:relative;flex:none}
+.switch:after{content:"";position:absolute;width:13px;height:13px;left:3px;top:3px;border-radius:50%;background:#c2cfdd;transition:.15s}
+.switch.on{background:#087fe8}.switch.on:after{left:19px;background:white}
+.range{width:112px;accent-color:#2695ff}
+.value{font-size:11px;color:#b9d9ff;min-width:30px;text-align:right}
+footer{padding:9px 15px;border-top:1px solid #183958;color:#8da9c8;font-size:10px;display:flex;justify-content:space-between}
+.hidden{display:none}
+@media(max-width:600px){.menu{width:90vw;min-width:0;left:5%;top:5%}.hint{display:none}}
+</style>
+</head>
+<body>
+<section class="menu" id="menu">
+<header><div class="logo">LOSZ</div><div class="version">MENU PREVIEW · v0.1</div></header>
+<nav class="tabs"><div class="tab active">GENERAL</div><div class="tab">VISUALS</div><div class="tab">SETTINGS</div></nav>
+<div class="content">
+<div class="section">GENERAL SETTINGS</div>
+<div class="item selected" data-kind="toggle"><div><div class="name">Show FPS</div><div class="sub">Display a performance counter</div></div><div class="switch on"></div></div>
+<div class="item" data-kind="toggle"><div><div class="name">Menu sounds</div><div class="sub">Interface navigation sounds</div></div><div class="switch on"></div></div>
+<div class="item" data-kind="toggle"><div><div class="name">Compact layout</div><div class="sub">Use reduced menu spacing</div></div><div class="switch"></div></div>
+<div class="section">INTERFACE</div>
+<div class="item" data-kind="range"><div><div class="name">Menu opacity</div><div class="sub">Panel transparency</div></div><input class="range" type="range" min="30" max="100" value="90"><span class="value">90%</span></div>
+<div class="item" data-kind="range"><div><div class="name">UI scale</div><div class="sub">Menu size</div></div><input class="range" type="range" min="75" max="125" value="100"><span class="value">100%</span></div>
+</div>
+<footer><span>UI ONLY · PREVIEW BUILD</span><span id="status">READY</span></footer>
+</section>
+<div class="hint">Keyboard: ↑ ↓ select · ← → adjust · ENTER toggle<br>Gamepad: D-pad navigate · ✕ select · L1 + R1 show/hide</div>
+<script>
+const menu=document.getElementById('menu'),items=[...document.querySelectorAll('.item')],status=document.getElementById('status');
+let selected=0,visible=true,lastToggle=0;
+function paint(){items.forEach((x,i)=>x.classList.toggle('selected',i===selected));}
+function activate(dir=1){const el=items[selected];if(el.dataset.kind==='toggle'){const sw=el.querySelector('.switch');sw.classList.toggle('on');status.textContent=sw.classList.contains('on')?'ON':'OFF';}else{const r=el.querySelector('input');r.value=Math.max(+r.min,Math.min(+r.max,+r.value+dir*5));r.dispatchEvent(new Event('input'));}}
+items.forEach(el=>{const r=el.querySelector('input');if(r)r.addEventListener('input',()=>el.querySelector('.value').textContent=r.value+'%');});
+function key(e){if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' '].includes(e.key))e.preventDefault();if(e.key==='ArrowUp')selected=(selected+items.length-1)%items.length;else if(e.key==='ArrowDown')selected=(selected+1)%items.length;else if(e.key==='ArrowLeft')activate(-1);else if(e.key==='ArrowRight'||e.key==='Enter'||e.key===' ')activate(1);paint();}
+addEventListener('keydown',key);
+function poll(){const pads=navigator.getGamepads?.()||[];for(const p of pads){if(!p)continue;const now=performance.now(),pressed=i=>p.buttons[i]?.pressed; if(pressed(4)&&pressed(5)&&now-lastToggle>500){visible=!visible;menu.classList.toggle('hidden',!visible);lastToggle=now;}if(now-lastToggle>170){if(pressed(12)||p.axes[1]<-.65){selected=(selected+items.length-1)%items.length;lastToggle=now;}else if(pressed(13)||p.axes[1]>.65){selected=(selected+1)%items.length;lastToggle=now;}else if(pressed(14)||p.axes[0]<-.65){activate(-1);lastToggle=now;}else if(pressed(15)||p.axes[0]>.65||pressed(0)){activate(1);lastToggle=now;}}}paint();requestAnimationFrame(poll);}
+poll();
+</script>
+</body></html>
